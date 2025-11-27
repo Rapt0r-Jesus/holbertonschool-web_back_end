@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Spawn task_wait_random n times and return"""
 import asyncio
 from typing import List
 
