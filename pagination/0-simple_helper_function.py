@@ -2,7 +2,7 @@
 """index range"""
 
 
-def index_range(page, page_size):
+def index_range(page, page_size) -> tuple:
     """
     Return a tuple of (start_index, end_index) for pagination.
     
