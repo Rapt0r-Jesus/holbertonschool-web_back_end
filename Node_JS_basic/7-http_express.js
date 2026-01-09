@@ -2,49 +2,53 @@ const express = require('express');
 const fs = require('fs');
 
 const app = express();
-const database = process.argv[2];
 
-app.get('/', (req, res) => {
-  res.send('Hello Holberton School!');
-});
-
-app.get('/students', (req, res) => {
-  res.set('Content-Type', 'text/plain');
-  res.write('This is the list of our students\n');
-
-  fs.readFile(database, 'utf8', (err, data) => {
-    if (err) {
-      res.end('Cannot load the database');
+const countStudents = (path) => new Promise((resolve, reject) => {
+  fs.readFile(path, 'utf8', (error, data) => {
+    if (error) {
+      reject(new Error('Cannot load the database'));
       return;
     }
 
     const lines = data.split('\n').filter((line) => line.trim() !== '');
     const students = lines.slice(1);
 
-    res.write(`Number of students: ${students.length}\n`);
+    const output = [];
+    output.push(`Number of students: ${students.length}`);
 
     const fields = {};
-
     students.forEach((line) => {
-      const parts = line.split(',');
-      const firstname = parts[0];
-      const field = parts[3];
-
+      const [firstname, , , field] = line.split(',');
       if (!fields[field]) {
         fields[field] = [];
       }
-
       fields[field].push(firstname);
     });
 
-    for (const field in fields) {
-      res.write(
-        `Number of students in ${field}: ${fields[field].length}. List: ${fields[field].join(', ')}\n`
-      );
+    for (const [field, names] of Object.entries(fields)) {
+      output.push(`Number of students in ${field}: ${names.length}. List: ${names.join(', ')}`);
     }
 
-    res.end();
+    resolve(output.join('\n'));
   });
+});
+
+app.get('/', (req, res) => {
+  res.send('Hello Holberton School!');
+});
+
+app.get('/students', (req, res) => {
+  const database = process.argv[2];
+
+  countStudents(database)
+    .then((studentData) => {
+      res.set('Content-Type', 'text/plain');
+      res.send(`This is the list of our students\n${studentData}`);
+    })
+    .catch(() => {
+      res.set('Content-Type', 'text/plain');
+      res.send('This is the list of our students\nCannot load the database');
+    });
 });
 
 app.listen(1245);
